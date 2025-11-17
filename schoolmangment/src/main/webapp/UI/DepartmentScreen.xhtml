@@ -1,0 +1,90 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+    <h:head>
+        <title>Department Dashboard</title>
+    </h:head>
+    <h:body>
+        <h:form id="deptForm" prependId="false">
+            <p:growl id="messages" showDetail="true" />
+
+            <p:toolbar>
+                <p:toolbarGroup>
+                    <p:commandButton id="navigate"
+                                     immediate="true"
+                                     value="Go to Employee Page"
+                                     icon="pi pi-arrow-left"
+                                     action="EmployeeAdminScreen.xhtml"
+                                     ajax="false"
+                                     style="background: linear-gradient(135deg, #667eea, #764ba2);
+                                     color: #fff;
+                                     border: none;
+                                     padding: 12px 24px;
+                                     border-radius: 10px;
+                                     font-weight: 600;
+                                     font-size: 15px;
+                                     margin: 8px;
+                                     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                                     transition: all 0.3s ease;" 
+                                     onmouseover="this.style.background = 'linear-gradient(135deg, #5a67d8, #6b46c1)'; this.style.transform = 'scale(1.05)';"
+                                     onmouseout="this.style.background = 'linear-gradient(135deg, #667eea, #764ba2)'; this.style.transform = 'scale(1)';" />
+                    <p:commandButton value="New Department"
+                                     icon="pi pi-plus"
+                                     actionListener="#{departmentBean.prepareAdd}"
+                                     update="manage-dept-dialog dt-dept"
+                                     oncomplete="PF('manageDeptDialog').show()" />
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <p:dataTable id="dt-dept" value="#{departmentBean.departments}" var="dept"
+                         editable="true" style="margin-top:20px">
+
+                <p:column headerText="ID">
+                    <h:outputText value="#{dept.departmentID}" />
+                </p:column>
+
+                <p:column headerText="Name">
+                    <h:outputText value="#{dept.departmentName}" />
+                </p:column>
+
+                <p:column headerText="Number of Employee">
+                    <h:outputText value="#{dept.employeesList != null ? dept.employeesList.size() : 0}" />
+                </p:column>
+
+                <p:column headerText="Actions" style="width:150px;">
+                    <p:commandButton icon="pi pi-pencil" 
+                                     process="@this"
+                                     update="manage-dept-dialog name" 
+                                     style="margin-right: 20px"
+                                     oncomplete="PF('manageDeptDialog').show()" 
+                                     actionListener="#{departmentBean.prepareEdit(dept)}"
+                                     title="Edit" />
+
+                    <p:commandButton icon="pi pi-trash"
+                                     actionListener="#{departmentBean.delete(dept)}"
+                                     update="dt-dept messages"
+                                     title="Delete"
+                                     styleClass="ui-button-danger" />
+                </p:column>
+            </p:dataTable>
+
+            <!-- Dialog for add/edit -->
+            <p:dialog id="manage-dept-dialog" header="Manage Department" widgetVar="manageDeptDialog" modal="true" resizable="false">
+                <h:panelGrid columns="2" cellpadding="5">
+                    <h:outputLabel value="Name:" for="name" />
+                    <p:inputText id="name" value="#{departmentBean.department.departmentName}" required="true" />
+                </h:panelGrid>
+
+                <p:commandButton value="Save"
+                                 actionListener="#{departmentBean.save}"
+                                 update="dt-dept messages"
+                                 oncomplete="PF('manageDeptDialog').hide()" />
+            </p:dialog>
+        </h:form>
+
+    </h:body>
+</html>

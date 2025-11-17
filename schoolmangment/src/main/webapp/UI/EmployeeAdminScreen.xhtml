@@ -1,0 +1,429 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      >
+    <h:head>
+        <title>Employee Dashboard</title>
+    </h:head>
+    <h:body>
+        <h:form id="mainForm" enctype="multipart/form-data">
+            <p:remoteCommand name="onDialogClose"
+                             actionListener="#{employeeManagedBean.endEdit}"
+                             process="@this"
+                             update="mainForm:messages" />
+            <div class="card crud-demo">
+                <p:growl id="messages" showDetail="true" />
+                <p:toolbar>
+                    <p:toolbarGroup>
+                        <p:commandButton process="@form" value="New" icon="pi pi-plus"                                                            
+                                         actionListener="#{employeeManagedBean.endEdit()}"
+                                         oncomplete="PF('manage-employee-dialog').show()"
+                                         styleClass="ui-button-success" style="margin-right: .5rem"/>
+                        <p:commandButton  style="margin-right: .5rem" immediate="true" id="delete-products-button" value="#{employeeManagedBean.messageDelete}"
+                                          icon="pi pi-trash" actionListener="#{employeeManagedBean.deleteSelectedEmployees}"
+                                          styleClass="ui-button-danger" disabled="#{!employeeManagedBean.hasSelectedEmployees()}" >
+                        </p:commandButton>
+
+                        <p:commandButton id="navigate"
+                                         immediate="true"
+                                         value="Go to Department Page"
+                                         icon="pi pi-arrow-right"
+                                         action="DepartmentScreen.xhtml"
+                                         ajax="false"
+                                         style="background: linear-gradient(135deg, #667eea, #764ba2);
+                                         color: #fff;
+                                         border: none;
+                                         padding: 12px 24px;
+                                         border-radius: 10px;
+                                         font-weight: 600;
+                                         font-size: 15px;
+                                         margin: 8px;
+                                         box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+                                         transition: all 0.3s ease;" 
+                                         onmouseover="this.style.background = 'linear-gradient(135deg, #5a67d8, #6b46c1)'; this.style.transform = 'scale(1.05)';"
+                                         onmouseout="this.style.background = 'linear-gradient(135deg, #667eea, #764ba2)'; this.style.transform = 'scale(1)';" />
+
+                    </p:toolbarGroup>
+
+                    <p:toolbarGroup align="right">
+                        <p:commandButton icon="pi pi-file-excel"
+                                         iconPos="left"
+                                         style="margin: 5px;"
+                                         immediate="true"
+                                         value="Export to MY Excel"
+                                         action="#{employeeManagedBean.export}"
+                                         ajax="false" />
+                        <p:fileUpload mode="simple"
+                                      value="#{employeeManagedBean.file}"
+                                      auto="true"
+                                      listener="#{employeeManagedBean.handleFileUpload}"
+                                      process="@this"
+                                      update="mainForm:dt-products mainForm:messages"
+                                      label="Import"
+                                      skinSimple="true"
+                                      chooseIcon="pi pi-download"/>
+
+                        <p:commandButton 
+                            immediate="true"
+                            value="Export PDF (MYFUN)" icon="pi pi-file-pdf"  style="color: #ffffff; margin: 5px;"
+                            actionListener="#{employeeManagedBean.exportToPDF(employeeManagedBean.employees)}"
+                            ajax="false" 
+                            />
+
+                        <p:commandButton value="Export PDF" icon="pi pi-file-pdf"  immediate="true"
+                                         ajax="false" style="margin: 5px;">
+                            <p:dataExporter type="pdf" target="dt-products" fileName="employees" />
+                        </p:commandButton>
+
+                        <p:commandButton value="Export CSV" icon="pi pi-file"   immediate="true"
+                                         ajax="false" style="margin: 5px;">
+                            <p:dataExporter type="csv" target="dt-products" fileName="employees" />
+                        </p:commandButton>
+
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+                <p:dataTable id="dt-products" widgetVar="dtProducts" var="employee" value="#{employeeManagedBean.employees}"
+                             reflow="true" styleClass="products-table" selectionMode="multiple" selection="#{employeeManagedBean.selectedEmployees}"
+                             rowKey="#{employee.employeeID}" paginator="true" rows="10" selectionRowMode="add" paginatorPosition="bottom">
+                    <f:facet name="header">
+                        <div class="products-table-header">
+                            <span style="font-weight: bold">Employees</span>
+                            <span class="filter-container ui-input-icon-left"> <i class="pi pi-search"></i>
+                                <p:inputText id="globalFilter" onkeyup="PrimeFaces.debounce(() => PF('dtProducts').filter())" placeholder="Search" />
+                            </span>
+                        </div>
+                    </f:facet>
+
+                    <p:ajax event="rowSelect" update="mainForm:delete-products-button" process="dt-products"/>
+                    <p:ajax event="rowUnselect" update="mainForm:delete-products-button" process="dt-products"/>
+                    <p:ajax event="rowSelectCheckbox" update="mainForm:delete-products-button" process="dt-products"/>
+                    <p:ajax event="rowUnselectCheckbox" update="mainForm:delete-products-button" process="dt-products"/>
+                    <p:ajax event="toggleSelect" update="mainForm:delete-products-button" process="dt-products"/>
+                    <p:ajax event="toggleSelect" update="mainForm:delete-products-button" process="dt-products"/>
+
+                    <p:column selectionBox="true" exportable="false"></p:column>
+
+                    <p:column headerText="Code" sortBy="#{employee.employeeID}" filterBy="#{employee.employeeID}">
+                        <h:outputText value="#{employee.employeeID}" />
+                    </p:column>
+
+                    <p:column headerText="Images">
+                        <p:graphicImage 
+                            value="#{empty employee.employeeImage 
+                                     ? resource['images/default.jpg'] 
+                                     : resource['images\\' += employee.employeeImage]}" 
+                            style="width:100px;height:100px;object-fit:cover;border-radius:50%;" />
+                    </p:column>
+
+
+                    <p:column headerText="Username" sortBy="#{employee.username}" filterBy="#{employee.username}">
+                        <h:outputText value="#{employee.username}" />
+                    </p:column>
+
+                    <p:column headerText="E-Mail" sortBy="#{employee.email}" filterBy="#{employee.email}">
+                        <h:outputText value="#{employee.email}" />
+                    </p:column>
+
+
+                    <p:column headerText="Full Name" sortBy="#{employee.fullName}" filterBy="#{employee.fullName}">
+                        <h:outputText value="#{employee.fullName}" />
+                    </p:column>
+                    
+                    <p:column headerText="Gender"
+                              sortBy="#{employee.gender}"
+                              filterBy="#{employee.gender}"
+                              filterMatchMode="equals">
+
+                        <f:facet name="filter">
+                            <p:selectOneMenu value="#{employeeManagedBean.selectedGenderFilter}"
+                                             style="width: 100%;"
+                                             onchange="PF('dtProducts').filter()">
+                                <f:selectItem itemLabel="Select Gender" itemValue="" noSelectionOption="true" />
+                                <f:selectItem itemLabel="Male" itemValue="Male" />
+                                <f:selectItem itemLabel="Female" itemValue="Female" />
+                            </p:selectOneMenu>
+                        </f:facet>
+
+                        <h:outputText value="#{employee.gender}" style="font-weight: 700" />
+                    </p:column>
+
+                    <p:column headerText="age" sortBy="#{employee.age}" filterBy="#{employee.age}">
+                        <h:outputText value="#{employee.age}" />
+                    </p:column>
+                    
+                    <p:column headerText="Job"
+                              sortBy="#{employee.job}"
+                              filterBy="#{employee.job}"
+                              filterMatchMode="in">
+                        <f:facet name="filter">
+                            <p:selectCheckboxMenu label="Select Jobs"
+                                                  onchange="PF('dtProducts').filter()"
+                                                  multiple="true"
+                                                  style="width: 100%"
+                                                  panelStyle="width:250px"
+                                                  value="#{employeeManagedBean.selectedJobFilters}">
+                                <f:selectItem itemLabel="Principal" itemValue="principal" />
+                                <f:selectItem itemLabel="Vice Principal" itemValue="vice Principal" />
+                                <f:selectItem itemLabel="Counselor" itemValue="counselor" />
+                                <f:selectItem itemLabel="Receptionist" itemValue="receptionist" />
+                                <f:selectItem itemLabel="Accountant" itemValue="accountant" />
+                                <f:selectItem itemLabel="Librarian" itemValue="librarian" />
+                                <f:selectItem itemLabel="Maintenance" itemValue="maintenance" />
+                                <f:selectItem itemLabel="Security" itemValue="security" />
+                            </p:selectCheckboxMenu>
+                        </f:facet>
+                        <h:outputText value="#{employee.job}" />
+                    </p:column>
+
+                    <p:column headerText="Department"
+                              sortBy="#{employee.depID.departmentName}"
+                              filterBy="#{employee.depID.departmentName}"
+                              filterMatchMode="in">
+
+                        <f:facet name="filter">
+                            <p:selectOneMenu value="#{employeeManagedBean.selectedDepartmentFilter}"
+                                             style="width:100%"
+                                             onchange="PF('dtProducts').filter()">
+                                <f:selectItem itemLabel="Select Department" itemValue="" noSelectionOption="true" />
+                                <f:selectItems value="#{employeeManagedBean.departments}"
+                                               var="dept"
+                                               itemLabel="#{dept.departmentName}"
+                                               itemValue="#{dept.departmentName}" />
+                            </p:selectOneMenu>
+                        </f:facet>
+
+                        <h:outputText value="#{employee.depID != null ? employee.depID.departmentName : 'N/A'}" />
+                    </p:column>
+
+                    <p:column headerText="Creation Date" sortBy="#{employee.creationDate}">
+                        <h:outputText value="#{employee.creationDate}" style="font-weight: 700"/>
+                    </p:column>
+
+                    <p:column headerText="Active" sortBy="#{employee.active}">
+                        <h:outputText value="#{employee.active?'Yes':'No'}" style="font-weight: 700"/>
+                    </p:column>
+
+                    <p:column exportable="false" ariaHeaderText="Actions" >
+
+
+                        <p:commandButton icon="pi pi-pencil"
+                                         update="mainForm:employeeDialog"
+                                         oncomplete="PF('manage-employee-dialog').show()"
+                                         styleClass="edit-button rounded-button ui-button-success"
+                                         process="@this">
+                            <f:setPropertyActionListener value="#{employee}" target="#{employeeManagedBean.employee}" />
+                        </p:commandButton>
+
+                        <p:commandButton class="ui-button-warning rounded-button" icon="pi pi-trash"
+                                         process="@this"
+                                         style="background-color: red; border-color: red; color: white; margin-left: 8px;"
+                                         oncomplete="PF('deleteProductDialog').show()">
+                            <f:setPropertyActionListener value="#{employee}" target="#{employeeManagedBean.employee}" />
+                        </p:commandButton>
+                    </p:column>
+
+                    <p:column headerText="Upload files">
+                        <p:commandButton value="Upload"
+                                         icon="pi pi-upload"
+                                         update="mainForm:uploadDialog"
+                                         oncomplete="PF('uploadDialog').show()"  process="@this">
+                            <f:setPropertyActionListener value="#{employee}" target="#{employeeManagedBean.employee}" />
+                        </p:commandButton>
+                    </p:column>
+                    
+                     <p:column headerText="Send Files to Email">
+                        <p:commandButton value="Send"
+                                         icon="pi pi-upload"
+                                         update="mainForm:messages"
+                                          actionListener="#{employeeManagedBean.sendEmailWithAttachments()}"
+                                          process="@this">
+                            <f:setPropertyActionListener value="#{employee}" target="#{employeeManagedBean.employee}" />
+                        </p:commandButton>
+                    </p:column>
+                    
+                </p:dataTable>
+
+                <p:confirmDialog widgetVar="deleteProductDialog" showEffect="fade" width="300"
+                                 message="Delete the Employee?" header="Confirm" severity="warn">
+                    <p:commandButton value="Yes" icon="pi pi-check" actionListener="#{employeeManagedBean.deleteEmployee()}"
+                                     process="@this" update="@form"
+                                     oncomplete="PF('deleteProductDialog').hide()" />
+                    <p:commandButton value="No" type="button" styleClass="ui-button-secondary" icon="pi pi-times"
+                                     onclick="PF('deleteProductDialog').hide()" />
+                </p:confirmDialog>
+
+                <p:confirmDialog global="true" showEffect="fade" width="300">
+                    <p:commandButton value="Yes" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-secondary"
+                                     icon="pi pi-times" />
+                </p:confirmDialog>
+            </div>
+            
+
+            <p:dialog id="uploadDialog"
+                      widgetVar="uploadDialog"
+                      header="Upload Employee Images"
+                      modal="true"
+                      resizable="false"
+                      width="600">
+
+                <!-- File Upload -->
+                <p:fileUpload id="fileUpload"
+                              mode="advanced"
+                              multiple="true"
+                              auto="true"
+                              update="filesTable messages"
+                              listener="#{employeeManagedBean.handleFilesUpload}"/>
+
+                <!-- Uploaded Files Table -->
+                <p:dataTable id="filesTable"
+                             value="#{employeeManagedBean.attachmentsFiles}"
+                             var="file"
+                             style="margin-top:1rem">
+
+                    <p:column headerText="File Name">
+                        <h:outputText value="#{file.fileName}"/>
+                    </p:column>
+
+                    <p:column headerText="Actions" style="width:150px; text-align:center">
+                        <!-- Download -->
+                        <p:commandButton icon="pi pi-download"
+                                         ajax="false"
+                                         title="Download"
+                                         immediate="true"
+                                         styleClass="ui-button-success"
+                                         onclick="PrimeFaces.monitorDownload(start, stop)">
+                            <p:fileDownload value="#{employeeManagedBean.download(file)}"/>
+                        </p:commandButton>
+
+                        <!-- Delete -->
+                        <p:commandButton icon="pi pi-trash"
+                                         immediate="true"
+                                         title="Delete"
+                                         styleClass="ui-button-danger"
+                                         actionListener="#{employeeManagedBean.deleteFile(file)}"
+                                         update="filesTable messages"/>
+                    </p:column>
+                </p:dataTable>
+            </p:dialog>
+
+            
+            <p:dialog id="employeeDialog"
+                      header="Employee Details"
+                      showEffect="fade"
+                      widgetVar="manage-employee-dialog"
+                      modal="true"
+                      responsive="true"
+                      height="600" 
+          >
+                <p:outputPanel  class="ui-fluid">
+                    <!-- Username -->
+                    <div class="field">
+                        <p:outputLabel for="username" value="Username" />
+                        <p:inputText id="username" maxlength="20" value="#{employeeManagedBean.employee.username}" style="margin-bottom: 15px;" />
+                    </div>
+                    <!-- Password -->
+                    <div class="field">
+                        <p:outputLabel for="password" value="Password" />
+                        <p:password id="password" maxlength="20" value="#{employeeManagedBean.employee.password}" 
+                                    toggleMask="true" redisplay="true" style="margin-bottom: 15px;" />
+                    </div>
+                    <!-- Username -->
+                    <div class="field">
+                        <p:outputLabel for="email" value="Email" />
+                        <p:inputText id="email" maxlength="20" value="#{employeeManagedBean.employee.email}" style="margin-bottom: 15px;" />
+                    </div>
+                    <!-- Full Name -->
+                    <div class="field">
+                        <p:outputLabel for="fullName" value="Full Name" />
+                        <p:inputText id="fullName" maxlength="20" value="#{employeeManagedBean.employee.fullName}"  style="margin-bottom: 15px;"   />
+                    </div>
+                    <!-- Age -->
+                    <div class="field">
+                        <p:outputLabel for="age" value="Age" />
+                        <p:inputText id="age" maxlength="2" value="#{employeeManagedBean.employee.age}" style="margin-bottom: 15px;"  />
+                    </div>
+                    <!-- Gender -->
+                    <div class="field">
+                        <p:outputLabel for="gender" value="Gender" />
+                        <p:selectOneMenu id="gender" value="#{employeeManagedBean.employee.gender}" style="margin-bottom: 15px;"  >
+                            <f:selectItem itemLabel="Select Gender" itemValue="" noSelectionOption="true"  />
+                            <f:selectItem itemLabel="Male" itemValue="Male" />
+                            <f:selectItem itemLabel="Female" itemValue="Female" />
+                        </p:selectOneMenu>
+                    </div>
+                    <!-- Role -->
+                    <div class="field">
+                        <p:outputLabel for="job" value="Role" />
+                        <p:selectOneMenu id="job" value="#{employeeManagedBean.employee.job}" style="width:100%; margin-bottom: 15px;"  >
+                            <f:selectItem itemLabel="Select Role" itemValue="" noSelectionOption="true" />
+                            <f:selectItem itemLabel="Principal" itemValue="principal" />
+                            <f:selectItem itemLabel="Vice Principal" itemValue="vice Principal" />
+                            <f:selectItem itemLabel="Counselor" itemValue="counselor" />
+                            <f:selectItem itemLabel="Receptionist" itemValue="receptionist" />
+                            <f:selectItem itemLabel="Accountant" itemValue="accountant" />
+                            <f:selectItem itemLabel="Librarian" itemValue="librarian" />
+                            <f:selectItem itemLabel="Maintenance" itemValue="maintenance" />
+                            <f:selectItem itemLabel="Security" itemValue="security" />
+                        </p:selectOneMenu>
+                    </div>
+                    <!-- Active -->
+                    <div class="field">
+                        <p:outputLabel for="active" value="Active" />
+                        <p:selectOneMenu id="active" value="#{employeeManagedBean.employee.active}" style="width:100%; margin-bottom: 15px;"  >
+                            <f:selectItem itemLabel="Select State: " itemValue="#{null}" />
+                            <f:selectItem itemLabel="Yes" itemValue="#{true}" />
+                            <f:selectItem itemLabel="No" itemValue="#{false}" />
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="field">
+                        <p:outputLabel for="department" value="Department" />
+                        <p:selectOneMenu id="department"
+                                         value="#{employeeManagedBean.employee.depID}" 
+                                         style="width:100%; margin-bottom: 15px;"
+                                         converter="entityConverter">
+                            <f:selectItem itemLabel="Select Department" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{employeeManagedBean.departments}" 
+                                           var="dept" 
+                                           itemLabel="#{dept.departmentName}" 
+                                           itemValue="#{dept}" />
+                        </p:selectOneMenu>
+                    </div>
+
+                    <div class="field">
+                         <p:fileUpload id="upload"
+                                       chooseButtonTitle = "Select Image"
+                                       listener="#{employeeManagedBean.handleImageUpload}"
+                                       mode="advanced"
+                                       auto="true"
+                                       style="width: 195px; height: 55px; overflow: hidden"
+                                       update=":mainForm:messages">
+                              <f:attribute name="employee" value="#{employeeManagedBean.employee}" />
+                         </p:fileUpload>
+                    
+                    </div>
+                </p:outputPanel>
+                <!-- Footer Buttons -->
+                <f:facet name="footer">
+                    <p:commandButton value="Save"
+                                     icon="pi pi-check"
+                                     actionListener="#{employeeManagedBean.insertEmployee}"
+                                     oncomplete="PF('manage-employee-dialog').hide()"
+                                     update="mainForm:dt-products mainForm:messages"
+                                     />
+
+                    <p:commandButton value="Cancel"
+                                     icon="pi pi-times"
+                                     oncomplete="PF('manage-employee-dialog').hide()"
+                                     onclick="PF('manage-employee-dialog').hide()"
+                                     class="ui-button-secondary"
+                                     type="button" />
+                </f:facet>
+            </p:dialog> 
+        </h:form>
+    </h:body>
+</html>
